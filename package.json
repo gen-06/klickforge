@@ -1,0 +1,20 @@
+{
+  "name": "youtubers-shortform",
+  "private": true,
+  "version": "0.0.1",
+  "description": "SaaS platform for converting long-form videos into short-form clips",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "test": "turbo run test"
+  },
+  "devDependencies": {
+    "turbo": "^2.0.0"
+  },
+  "packageManager": "pnpm@9.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ]
+}
