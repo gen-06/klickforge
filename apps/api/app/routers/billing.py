@@ -1,6 +1,7 @@
 """Billing endpoints: Paddle Checkout, subscriptions, and webhooks."""
 
 import json
+import logging
 import uuid
 from datetime import datetime
 from typing import List
@@ -26,6 +27,7 @@ from app.services.subscriptions import (
     subscription_tier,
 )
 
+logger = logging.getLogger("clipforge.billing")
 router = APIRouter()
 
 # One-time credit top-up packs. Create these in Paddle and set the env vars.
@@ -270,6 +272,10 @@ class _WebhookRequest:
 @router.post("/webhook")
 async def paddle_webhook(request: Request):
     client_ip = get_client_ip(request)
+    logger.info(
+        "paddle_webhook.ip_check",
+        extra={"client_ip": client_ip, "xff": request.headers.get("x-forwarded-for"), "is_allowed": is_paddle_ip(client_ip)},
+    )
     if not is_paddle_ip(client_ip):
         raise HTTPException(status_code=403, detail="Source IP is not a recognized Paddle IP")
 
