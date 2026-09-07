@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import Link from "next/link";
-import { getSubscription, openCustomerPortal, type Subscription } from "@/lib/api";
+import { ApiError, getSubscription, openCustomerPortal, type Subscription } from "@/lib/api";
 
 function formatDate(date: string | null) {
   if (!date) return null;
@@ -26,9 +26,16 @@ export function SubscriptionButton() {
         const token = await getToken();
         const sub = await getSubscription(token);
         if (!cancelled) setSubscription(sub);
-      } catch {
-        // 404 means no active subscription.
-        if (!cancelled) setSubscription(null);
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          // 404 means no active subscription.
+          if (!cancelled) setSubscription(null);
+        } else {
+          // Transient failure (network, 5xx, expired token) — don't tell a
+          // paying customer they have no subscription. Leave the loading
+          // state and let the next render/mount retry.
+          console.error("Failed to load subscription", err);
+        }
       }
     }
     load();

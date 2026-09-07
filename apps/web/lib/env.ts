@@ -5,3 +5,16 @@ export function getRequiredEnv(name: string): string {
   }
   return value;
 }
+
+export function getRequiredEnumEnv<T extends string>(
+  name: string,
+  allowed: readonly T[]
+): T {
+  const value = getRequiredEnv(name);
+  if (!allowed.includes(value as T)) {
+    throw new Error(
+      `Invalid value for env var ${name}: "${value}" (expected one of: ${allowed.join(", ")})`
+    );
+  }
+  return value as T;
+}

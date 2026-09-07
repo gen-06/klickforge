@@ -24,7 +24,11 @@ export interface Video {
   subtitle_font: string;
   subtitle_size: number;
   subtitle_color: string;
-  subtitle_position: "bottom" | "middle" | "top";
+  // Backend stores this as a free-form string (see app/models.py); the
+  // upload form only ever sends "bottom" | "middle" | "top" (CaptionStyle
+  // above), but other values like "bottom-center" are valid and supported
+  // by the worker's alignment mapping.
+  subtitle_position: string;
   subtitle_outline: number;
   subtitle_outline_color: string;
   audio_mode: "subtitles_only" | "voiceover" | "voiceover_with_original";

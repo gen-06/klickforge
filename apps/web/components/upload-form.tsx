@@ -201,13 +201,12 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
     setProgress(10);
 
     try {
-      const token = await getToken();
       setProgress(15);
       const { key, url: uploadUrl } = await getPresignedUploadUrl(
         file.name,
         file.size,
         file.type,
-        token
+        await getToken()
       );
 
       await uploadFileWithProgress(file, uploadUrl, (uploadPercent) => {
@@ -216,6 +215,9 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
         setProgress(15 + Math.round(uploadPercent * 0.55));
       });
 
+      // Fetch a fresh token for each call below — the R2 upload above can take
+      // a while for large files, long enough for the previous Clerk session
+      // token to expire.
       const video = await createVideo(
         title,
         key,
@@ -224,10 +226,10 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
         captionStyle,
         audioMode,
         voice,
-        token
+        await getToken()
       );
       setProgress(80);
-      await completeUpload(video.id, token);
+      await completeUpload(video.id, await getToken());
       setProgress(100);
       setFile(null);
       setTitle("");

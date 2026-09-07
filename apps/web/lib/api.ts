@@ -47,6 +47,30 @@ async function fetchWithRetry(
   throw lastError ?? new Error("Request failed after retries");
 }
 
+export class ApiError extends Error {
+  status: number;
+  constructor(message: string, status: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+// Fallback for refreshing an expired Clerk token outside of React: the
+// ClerkProvider exposes a global `window.Clerk` once loaded, whose session
+// always returns a live (auto-refreshed) token. Used to retry requests that
+// fail because the token passed in by the caller went stale mid-flight
+// (e.g. a long-running upload holding a token fetched at the start).
+async function getFreshTokenFallback(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+  const clerk = (window as unknown as { Clerk?: { session?: { getToken(): Promise<string | null> } } }).Clerk;
+  try {
+    return (await clerk?.session?.getToken()) ?? null;
+  } catch {
+    return null;
+  }
+}
+
 export async function apiFetch(path: string, options: RequestInit = {}, token?: string | null) {
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
@@ -56,13 +80,31 @@ export async function apiFetch(path: string, options: RequestInit = {}, token?: 
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetchWithRetry(`${API_URL}${path}`, {
+  let res = await fetchWithRetry(`${API_URL}${path}`, {
     ...options,
     headers,
   });
+
+  if (res.status === 401 && token) {
+    const text = await res.text();
+    if (/expired/i.test(text)) {
+      const freshToken = await getFreshTokenFallback();
+      if (freshToken && freshToken !== token) {
+        res = await fetchWithRetry(`${API_URL}${path}`, {
+          ...options,
+          headers: { ...headers, Authorization: `Bearer ${freshToken}` },
+        });
+      } else {
+        throw new ApiError(text || `Request failed: ${res.status}`, res.status);
+      }
+    } else {
+      throw new ApiError(text || `Request failed: ${res.status}`, res.status);
+    }
+  }
+
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || `Request failed: ${res.status}`);
+    throw new ApiError(text || `Request failed: ${res.status}`, res.status);
   }
   if (res.status === 204) {
     return undefined;

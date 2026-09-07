@@ -1,6 +1,6 @@
 import { headers } from "next/headers";
 import { currentUser } from "@clerk/nextjs/server";
-import { getRequiredEnv } from "@/lib/env";
+import { getRequiredEnv, getRequiredEnumEnv } from "@/lib/env";
 import { PricingCards } from "@/components/pricing-cards";
 
 async function getCountryCode(): Promise<string | null> {
@@ -18,9 +18,10 @@ export default async function PricingPage() {
   const email = user?.emailAddresses?.[0]?.emailAddress ?? null;
 
   const clientToken = getRequiredEnv("NEXT_PUBLIC_PADDLE_CLIENT_TOKEN");
-  const environment = getRequiredEnv("NEXT_PUBLIC_PADDLE_ENV") as
-    | "sandbox"
-    | "live";
+  const environment = getRequiredEnumEnv("NEXT_PUBLIC_PADDLE_ENV", [
+    "sandbox",
+    "live",
+  ] as const);
   const priceIds = {
     starter: {
       month: getRequiredEnv("NEXT_PUBLIC_PADDLE_PRICE_STARTER_MONTH"),
