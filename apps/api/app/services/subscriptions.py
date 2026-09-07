@@ -1,5 +1,6 @@
 from datetime import datetime
 
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.models import Subscription, User
@@ -14,9 +15,9 @@ ACCESS_GRANTING_STATUSES = {"active", "trialing"}
 
 # Credits granted per month for each subscription tier.
 CREDITS_PER_MONTH = {
-    "starter": 1_000,
-    "pro": 5_000,
-    "advanced": 20_000,
+    "starter": 6_000,
+    "pro": 15_000,
+    "advanced": 36_000,
 }
 
 YEARLY_PRICE_IDS = {
@@ -108,7 +109,11 @@ def maybe_grant_subscription_credits(db: Session, sub: Subscription) -> int:
     if not user:
         return 0
 
-    user.credits_balance += credits
+    # Atomic increment: avoids a lost update if another credit grant lands
+    # for the same user at the same time (e.g. a credit-pack purchase).
+    db.execute(
+        update(User).where(User.id == user.id).values(credits_balance=User.credits_balance + credits)
+    )
     sub.credits_granted += credits
     sub.last_credit_grant_at = datetime.utcnow()
     db.commit()

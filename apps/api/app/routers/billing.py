@@ -6,7 +6,9 @@ from datetime import datetime
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi.concurrency import run_in_threadpool
 from paddle_billing.Notifications import Secret, Verifier
+from sqlalchemy import update
 from sqlalchemy.orm import Session
 
 from app.auth import get_current_user
@@ -240,7 +242,11 @@ def _handle_transaction_completed(db: Session, data):
     if not user:
         return
 
-    user.credits_balance += credits
+    # Atomic increment: avoids a lost update if another credit grant lands
+    # for the same user at the same time (e.g. a subscription renewal).
+    db.execute(
+        update(User).where(User.id == user.id).values(credits_balance=User.credits_balance + credits)
+    )
     purchase = CreditPurchase(
         transaction_id=transaction_id,
         customer_id=customer_id,
@@ -283,8 +289,24 @@ async def paddle_webhook(request: Request):
 
     event_type = event.get("event_type")
     data = event.get("data", {})
-    db = SessionLocal()
 
+    # The handlers below do synchronous SQLAlchemy I/O (network round-trips to
+    # Postgres). Running them inline on the event loop blocks it for the
+    # duration of every webhook, which serializes concurrent deliveries —
+    # Paddle commonly fires several related events (e.g. subscription.updated
+    # + subscription.canceled) within the same millisecond, and the second
+    # one can time out waiting for the first to finish. Offload to a thread
+    # so concurrent deliveries are actually handled concurrently.
+    try:
+        await run_in_threadpool(_process_webhook_event, event_type, data)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {exc}")
+
+    return {"status": "ok"}
+
+
+def _process_webhook_event(event_type: str, data: dict):
+    db = SessionLocal()
     try:
         if event_type in ("customer.created", "customer.updated"):
             _handle_customer_event(db, data)
@@ -292,9 +314,5 @@ async def paddle_webhook(request: Request):
             _handle_subscription_event(db, data)
         elif event_type == "transaction.completed":
             _handle_transaction_completed(db, data)
-    except Exception as exc:
-        raise HTTPException(status_code=500, detail=f"Webhook processing failed: {exc}")
     finally:
         db.close()
-
-    return {"status": "ok"}
