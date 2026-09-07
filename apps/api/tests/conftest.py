@@ -5,6 +5,16 @@ import uuid
 from datetime import datetime
 from uuid import uuid4 as _uuid4
 
+# Force safe defaults for settings that must be syntactically valid at
+# import time (e.g. StorageService builds a boto3 client from these), so the
+# test suite doesn't break depending on what a developer's local .env has
+# filled in (or left as unfilled placeholders like "<ACCOUNT_ID>"). Real
+# environment variables take precedence over .env file values in
+# pydantic-settings, so this reliably overrides them.
+os.environ["STORAGE_ENDPOINT"] = "http://localhost:9000"
+os.environ["STORAGE_INTERNAL_ENDPOINT"] = "http://localhost:9000"
+os.environ["STORAGE_PUBLIC_URL"] = "http://localhost:9000"
+
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import String, TypeDecorator, create_engine

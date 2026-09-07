@@ -2,7 +2,7 @@ import enum
 from datetime import datetime
 from uuid import uuid4
 
-from sqlalchemy import Column, DateTime, Enum, Float, ForeignKey, Integer, JSON, String, Text
+from sqlalchemy import Boolean, Column, DateTime, Enum, Float, ForeignKey, Integer, JSON, String, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 
@@ -135,6 +135,9 @@ class Job(Base):
     status = Column(Enum(JobStatus), default=JobStatus.QUEUED)
     progress = Column(Integer, default=0)
     error_message = Column(Text)
+    # Set once credits have been deducted for this job, so a Celery retry of
+    # the same job attempt never charges the user twice.
+    credits_charged = Column(Boolean, default=False, nullable=False, server_default="false")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

@@ -5,6 +5,8 @@ import tempfile
 import uuid
 from pathlib import Path
 
+from sqlalchemy import update
+
 from app.config import settings
 from app.database import SessionLocal
 from app.models import Clip, ClipStatus, Job, JobStatus, User, Video, VideoStatus
@@ -36,9 +38,40 @@ def _retry_countdown(retry_index: int, base_seconds: int = 60) -> int:
     return int(base_seconds * (2 ** retry_index) + random.uniform(0, 10))
 
 
+def _charge_credits(db, job: "Job | None", user_id, cost: int) -> User:
+    """Atomically deduct credits, exactly once per job even across Celery
+    retries of the same task attempt.
+
+    Uses a conditional UPDATE (balance check + deduction in one statement)
+    so two concurrent charges for the same user can't both read a stale
+    balance and both succeed.
+    """
+    if job is not None and job.credits_charged:
+        user = db.query(User).filter(User.id == user_id).first()
+        if not user:
+            raise InsufficientCreditsError("User not found")
+        return user
+
+    result = db.execute(
+        update(User)
+        .where(User.id == user_id, User.credits_balance >= cost)
+        .values(credits_balance=User.credits_balance - cost, credits_used=User.credits_used + cost)
+    )
+    if result.rowcount == 0:
+        user = db.query(User).filter(User.id == user_id).first()
+        raise InsufficientCreditsError(
+            f"Insufficient credits: {cost} required, {user.credits_balance if user else 0} available"
+        )
+    if job is not None:
+        job.credits_charged = True
+    db.commit()
+    return db.query(User).filter(User.id == user_id).first()
+
+
 @celery_app.task(bind=True, max_retries=3)
 def process_video(self, video_id: str, job_id: str):
     db = SessionLocal()
+    video = job = None
     try:
         video = db.query(Video).filter(Video.id == video_id).first()
         job = db.query(Job).filter(Job.id == job_id).first()
@@ -62,16 +95,10 @@ def process_video(self, video_id: str, job_id: str):
             video.status = VideoStatus.PROCESSING
             db.commit()
 
-            # Enforce credits before any AI work.
+            # Enforce credits before any AI work. Idempotent across retries:
+            # a job is only ever charged once (see _charge_credits).
             cost = calculate_cost(duration, video.audio_mode)
-            user = db.query(User).filter(User.id == video.user_id).first()
-            if not user or user.credits_balance < cost:
-                raise InsufficientCreditsError(
-                    f"Insufficient credits: {cost} required, {user.credits_balance if user else 0} available"
-                )
-            user.credits_balance -= cost
-            user.credits_used += cost
-            db.commit()
+            _charge_credits(db, job, video.user_id, cost)
 
             # Transcribe once for scoring (and translate if a target language was chosen).
             local_audio = Path(tmpdir) / f"{uuid.uuid4()}_audio.mp3"
@@ -173,6 +200,13 @@ def process_video(self, video_id: str, job_id: str):
     except Exception as exc:
         db.rollback()
         logger.exception("process_video.retryable_error", extra={"video_id": video_id, "job_id": job_id, "retry": self.request.retries})
+        # While a Celery retry is still pending, leave job/video status as
+        # PROCESSING rather than FAILED. Otherwise the frontend shows a
+        # "Retry" button during the retry backoff window, and a user click
+        # there enqueues a second concurrent process_video run for the same
+        # video on top of the one Celery is about to retry.
+        if self.request.retries < self.max_retries:
+            raise self.retry(exc=exc, countdown=_retry_countdown(self.request.retries))
         if job:
             job.status = JobStatus.FAILED
             job.error_message = str(exc)
@@ -180,7 +214,6 @@ def process_video(self, video_id: str, job_id: str):
         if video:
             video.status = VideoStatus.FAILED
             db.commit()
-        raise self.retry(exc=exc, countdown=_retry_countdown(self.request.retries))
     finally:
         db.close()
 
@@ -209,17 +242,11 @@ def regenerate_clip(self, clip_id: str, job_id: str | None = None):
         clip.status = ClipStatus.PROCESSING
         db.commit()
 
-        # Enforce credits for regeneration.
+        # Enforce credits for regeneration. Idempotent across retries: a job
+        # is only ever charged once (see _charge_credits).
         duration = clip.end_time - clip.start_time
         cost = calculate_cost(duration, video.audio_mode)
-        user = db.query(User).filter(User.id == video.user_id).first()
-        if not user or user.credits_balance < cost:
-            raise InsufficientCreditsError(
-                f"Insufficient credits: {cost} required, {user.credits_balance if user else 0} available"
-            )
-        user.credits_balance -= cost
-        user.credits_used += cost
-        db.commit()
+        _charge_credits(db, job, video.user_id, cost)
 
         storage = StorageService()
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -309,6 +336,8 @@ def regenerate_clip(self, clip_id: str, job_id: str | None = None):
     except Exception as exc:
         db.rollback()
         logger.exception("regenerate_clip.retryable_error", extra={"clip_id": clip_id, "job_id": job_id, "retry": self.request.retries})
+        if self.request.retries < self.max_retries:
+            raise self.retry(exc=exc, countdown=_retry_countdown(self.request.retries))
         if job:
             job.status = JobStatus.FAILED
             job.error_message = str(exc)
@@ -316,7 +345,6 @@ def regenerate_clip(self, clip_id: str, job_id: str | None = None):
         if clip:
             clip.status = ClipStatus.FAILED
             db.commit()
-        raise self.retry(exc=exc, countdown=_retry_countdown(self.request.retries))
     finally:
         db.close()
 

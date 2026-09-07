@@ -49,7 +49,7 @@ def signup(payload: WaitlistSignup, db: Session = Depends(get_db)):
 
 
 def _require_admin(user: User):
-    admin_emails = {email.strip().lower() for email in settings.ADMIN_EMAILS if email.strip()}
+    admin_emails = set(settings.admin_email_list)
     if not admin_emails or user.email.lower() not in admin_emails:
         raise HTTPException(status_code=403, detail="Forbidden")
 

@@ -12,6 +12,7 @@ from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.models import Base
 from app.routers import billing, clips, jobs, public, users, videos, waitlist
 from app.services.health import run_health_checks
+from app.services.storage import StorageService
 from app.worker import tasks  # noqa: F401
 
 
@@ -28,6 +29,7 @@ async def lifespan(app: FastAPI):
     validate_settings()
     if settings.ENVIRONMENT != "production":
         Base.metadata.create_all(bind=engine)
+    StorageService().ensure_buckets()
     yield
 
 

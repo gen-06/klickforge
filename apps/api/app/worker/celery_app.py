@@ -1,8 +1,8 @@
 import logging
 from celery import Celery
-from celery.signals import task_failure
+from celery.signals import task_failure, worker_process_init
 
-from app.config import settings
+from app.config import settings, validate_settings
 
 logger = logging.getLogger("clipforge.worker")
 
@@ -25,6 +25,13 @@ celery_app.conf.update(
     result_expires=3600,
     imports=["app.worker.tasks"],
 )
+
+
+@worker_process_init.connect
+def validate_worker_settings(**kwargs):
+    """Fail fast at worker boot instead of mid-task, after credits may
+    already have been deducted for a job."""
+    validate_settings()
 
 
 @task_failure.connect

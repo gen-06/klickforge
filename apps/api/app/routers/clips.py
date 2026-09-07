@@ -102,6 +102,8 @@ def regenerate_clip_endpoint(
     )
     if not clip:
         raise HTTPException(status_code=404, detail="Clip not found")
+    if clip.status == ClipStatus.PROCESSING:
+        raise HTTPException(status_code=409, detail="Clip is already being regenerated")
 
     clip.status = ClipStatus.PROCESSING
     clip.output_url = None

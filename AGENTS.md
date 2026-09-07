@@ -155,7 +155,7 @@ pnpm --filter web lint       # runs eslint via Next.js config
 
 ## Security considerations
 
-- **Authentication is a placeholder in the backend.** `app/routers/videos.py::get_current_user` creates and returns a hard-coded demo user (`demo@example.com`). The frontend uses Clerk, but the API does not verify Clerk JWTs. This must be replaced before production.
+- **Authentication is real Clerk JWT verification.** `app/auth.py::get_current_user` validates the bearer token against Clerk's JWKS (via `CLERK_ISSUER`/`CLERK_PUBLISHABLE_KEY`) and upserts a local `User` row from the token claims. It only falls back to a hard-coded demo user (`demo@example.com`) when `CLERK_VERIFY_TOKENS=false` is explicitly set — that flag must stay `true` (the default) in production.
 - **CORS** is configured from `CORS_ORIGINS` in `app/config.py`.
 - **Storage** uses presigned URLs for upload and download. The backend never handles raw video bytes over HTTP.
 - **Secrets** are read from `.env` files. Never commit `.env`, `.env.local`, or `.env.*.local`. `.env.example` is the checked-in template.

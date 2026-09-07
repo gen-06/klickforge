@@ -15,8 +15,14 @@ class Settings(BaseSettings):
     CLERK_ISSUER: Optional[str] = None
     CLERK_VERIFY_TOKENS: bool = True
 
-    # Admin access (comma-separated list of emails allowed to view waitlist/export data)
-    ADMIN_EMAILS: List[str] = []
+    # Admin access: comma-separated list of emails allowed to view waitlist/export data.
+    # Plain string (not List[str]) because pydantic-settings parses List-typed env
+    # vars as JSON, which is awkward to hand-enter in a hosting dashboard like Railway.
+    ADMIN_EMAILS: str = ""
+
+    @property
+    def admin_email_list(self) -> List[str]:
+        return [e.strip().lower() for e in self.ADMIN_EMAILS.split(",") if e.strip()]
 
     # AI / subtitles
     OPENAI_API_KEY: Optional[str] = None
@@ -81,8 +87,6 @@ def validate_settings():
         missing.append("DATABASE_URL")
     if not settings.REDIS_URL:
         missing.append("REDIS_URL")
-    if not settings.CLERK_SECRET_KEY:
-        missing.append("CLERK_SECRET_KEY")
     if not settings.CLERK_PUBLISHABLE_KEY:
         missing.append("CLERK_PUBLISHABLE_KEY")
     if not settings.OPENAI_API_KEY:

@@ -23,6 +23,7 @@ def upgrade() -> None:
         sa.Column('email', sa.String(length=255), nullable=False),
         sa.Column('source', sa.String(length=50), nullable=True),
         sa.Column('created_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
+        sa.Column('updated_at', sa.DateTime(), nullable=False, server_default=sa.text('NOW()')),
         sa.PrimaryKeyConstraint('id'),
         sa.UniqueConstraint('email')
     )

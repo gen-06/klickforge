@@ -42,6 +42,21 @@ def _validate_upload(filename: str, content_type: str | None = None) -> None:
         )
 
 
+def _active_job_for_video(db: Session, video_id) -> Job | None:
+    """An already-queued/processing job for this video, if any.
+
+    Returning it instead of enqueueing a new one prevents duplicate
+    concurrent process_video runs from a double-click or a client retrying
+    a request whose response was lost after the server already succeeded.
+    """
+    return (
+        db.query(Job)
+        .filter(Job.video_id == video_id, Job.status.in_([JobStatus.QUEUED, JobStatus.PROCESSING]))
+        .order_by(Job.created_at.desc())
+        .first()
+    )
+
+
 @router.post("/presigned-upload", response_model=PresignedUploadOut)
 def presigned_upload(
     filename: str,
@@ -60,7 +75,6 @@ def presigned_upload(
         )
 
     storage = StorageService()
-    storage.ensure_buckets()
     key = f"{user.id}/{uuid4()}_{filename}"
     url = storage.get_presigned_upload_url(key, bucket=storage.uploads_bucket)
     return {"key": key, "url": url}
@@ -112,6 +126,10 @@ def complete_upload(
     if not video:
         raise HTTPException(status_code=404, detail="Video not found")
 
+    existing_job = _active_job_for_video(db, video.id)
+    if existing_job:
+        return existing_job
+
     storage = StorageService()
     video.source_url = storage.get_url(video.source_key, bucket=storage.uploads_bucket)
     video.status = VideoStatus.UPLOADED
@@ -138,6 +156,10 @@ def retry_video(
         raise HTTPException(status_code=404, detail="Video not found")
     if video.status not in (VideoStatus.FAILED.value, VideoStatus.DONE.value):
         raise HTTPException(status_code=400, detail="Only failed or completed videos can be retried")
+
+    existing_job = _active_job_for_video(db, video.id)
+    if existing_job:
+        return existing_job
 
     # Clean up previous clips so we don't duplicate or leave stale outputs.
     storage = StorageService()
