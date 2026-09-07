@@ -14,8 +14,10 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.config import settings
 from app.database import SessionLocal, get_db
+from app.middleware.rate_limit import get_client_ip
 from app.models import CreditPurchase, Customer, Subscription, User
 from app.services.paddle_client import paddle
+from app.services.paddle_webhook_security import is_paddle_ip
 from app.schemas import CreditPackOut
 from app.services.credits import credits_for_price_id
 from app.services.subscriptions import (
@@ -267,6 +269,10 @@ class _WebhookRequest:
 
 @router.post("/webhook")
 async def paddle_webhook(request: Request):
+    client_ip = get_client_ip(request)
+    if not is_paddle_ip(client_ip):
+        raise HTTPException(status_code=403, detail="Source IP is not a recognized Paddle IP")
+
     raw_body = await request.body()
     signature_header = request.headers.get("paddle-signature", "")
 
