@@ -274,8 +274,8 @@ async def paddle_webhook(request: Request):
     client_ip = get_client_ip(request)
     allowed = is_paddle_ip(client_ip)
     logger.warning(
-        "paddle_webhook.ip_check",
-        extra={"client_ip": client_ip, "xff": request.headers.get("x-forwarded-for"), "is_allowed": allowed},
+        f"paddle_webhook.ip_check client_ip={client_ip} xff={request.headers.get('x-forwarded-for')} "
+        f"cf_connecting_ip={request.headers.get('cf-connecting-ip')} allowed={allowed}"
     )
     if not allowed:
         raise HTTPException(status_code=403, detail="Source IP is not a recognized Paddle IP")
