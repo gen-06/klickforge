@@ -17,14 +17,21 @@ export interface Tier {
   priceId: { month: string; year: string };
 }
 
+// Every tier gets the same feature set today (captions, styling, translation,
+// voiceover, 1080x1920 exports) — the only real differentiator is the
+// monthly processing budget. Keep these numbers in sync with
+// CREDITS_PER_MONTH in apps/api/app/services/subscriptions.py (credits are
+// 1/sec of source video for captions-only, 2/sec with AI voiceover, so the
+// figure below is the captions-only ceiling).
 const TIERS: Tier[] = [
   {
     name: "Starter",
     description: "For creators getting started with short-form content.",
     features: [
-      "10 videos/month",
-      "720p exports",
-      "Basic captions",
+      "Up to 100 min of video/month",
+      "AI captions with full style customization",
+      "Multi-language translation & AI voiceover",
+      "1080×1920 vertical exports",
       "Email support",
     ],
     priceId: { month: "", year: "" },
@@ -33,11 +40,11 @@ const TIERS: Tier[] = [
     name: "Pro",
     description: "For growing channels that need more power and flexibility.",
     features: [
-      "50 videos/month",
-      "1080p exports",
-      "Advanced captions & styles",
-      "Priority support",
-      "Analytics dashboard",
+      "Up to 250 min of video/month",
+      "AI captions with full style customization",
+      "Multi-language translation & AI voiceover",
+      "1080×1920 vertical exports",
+      "Priority email support",
     ],
     priceId: { month: "", year: "" },
   },
@@ -45,12 +52,11 @@ const TIERS: Tier[] = [
     name: "Advanced",
     description: "For teams and agencies producing at scale.",
     features: [
-      "Unlimited videos",
-      "4K exports",
-      "Custom branding",
-      "Dedicated support",
-      "Team collaboration",
-      "API access",
+      "Up to 600 min of video/month",
+      "AI captions with full style customization",
+      "Multi-language translation & AI voiceover",
+      "1080×1920 vertical exports",
+      "Priority support",
     ],
     priceId: { month: "", year: "" },
   },
@@ -163,7 +169,7 @@ export function PricingCards({
         settings: {
           displayMode: "overlay",
           variant: "one-page",
-          successUrl: "http://localhost:3000/welcome",
+          successUrl: `${window.location.origin}/welcome`,
         },
         customer: email ? { email } : undefined,
       });

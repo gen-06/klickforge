@@ -58,6 +58,8 @@ const steps = [
   { step: "3", title: "Publish", description: "Download vertical clips and post everywhere." },
 ];
 
+// Keep in sync with components/pricing-cards.tsx TIERS and
+// apps/api/app/services/subscriptions.py (CREDITS_PER_MONTH / TIER_PRICES).
 const pricingTeaser = [
   {
     name: "Starter",
@@ -65,23 +67,23 @@ const pricingTeaser = [
     price: "$10",
     period: "/month",
     description: "Perfect for solo creators trying short-form.",
-    features: ["10 videos/month", "720p exports", "Basic captions", "Email support"],
+    features: ["Up to 100 min of video/month", "AI captions & styling", "Email support"],
   },
   {
     name: "Pro",
     icon: Crown,
-    price: "$40",
+    price: "$25",
     period: "/month",
     description: "For growing channels that need more power.",
-    features: ["50 videos/month", "1080p exports", "Advanced captions", "Priority support"],
+    features: ["Up to 250 min of video/month", "Multi-language voiceover", "Priority email support"],
   },
   {
     name: "Advanced",
     icon: Sparkles,
-    price: "$120",
+    price: "$60",
     period: "/month",
     description: "For teams and agencies producing at scale.",
-    features: ["Unlimited videos", "4K exports", "Custom branding", "API access"],
+    features: ["Up to 600 min of video/month", "Multi-language voiceover", "Priority support"],
   },
 ];
 
