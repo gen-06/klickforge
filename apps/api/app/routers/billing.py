@@ -272,11 +272,12 @@ class _WebhookRequest:
 @router.post("/webhook")
 async def paddle_webhook(request: Request):
     client_ip = get_client_ip(request)
-    logger.info(
+    allowed = is_paddle_ip(client_ip)
+    logger.warning(
         "paddle_webhook.ip_check",
-        extra={"client_ip": client_ip, "xff": request.headers.get("x-forwarded-for"), "is_allowed": is_paddle_ip(client_ip)},
+        extra={"client_ip": client_ip, "xff": request.headers.get("x-forwarded-for"), "is_allowed": allowed},
     )
-    if not is_paddle_ip(client_ip):
+    if not allowed:
         raise HTTPException(status_code=403, detail="Source IP is not a recognized Paddle IP")
 
     raw_body = await request.body()
