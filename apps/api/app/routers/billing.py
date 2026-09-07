@@ -1,7 +1,6 @@
 """Billing endpoints: Paddle Checkout, subscriptions, and webhooks."""
 
 import json
-import logging
 import uuid
 from datetime import datetime
 from typing import List
@@ -15,10 +14,8 @@ from sqlalchemy.orm import Session
 from app.auth import get_current_user
 from app.config import settings
 from app.database import SessionLocal, get_db
-from app.middleware.rate_limit import get_client_ip
 from app.models import CreditPurchase, Customer, Subscription, User
 from app.services.paddle_client import paddle
-from app.services.paddle_webhook_security import is_paddle_ip
 from app.schemas import CreditPackOut
 from app.services.credits import credits_for_price_id
 from app.services.subscriptions import (
@@ -27,7 +24,6 @@ from app.services.subscriptions import (
     subscription_tier,
 )
 
-logger = logging.getLogger("clipforge.billing")
 router = APIRouter()
 
 # One-time credit top-up packs. Create these in Paddle and set the env vars.
@@ -271,15 +267,6 @@ class _WebhookRequest:
 
 @router.post("/webhook")
 async def paddle_webhook(request: Request):
-    client_ip = get_client_ip(request)
-    allowed = is_paddle_ip(client_ip)
-    logger.warning(
-        f"paddle_webhook.ip_check client_ip={client_ip} xff={request.headers.get('x-forwarded-for')} "
-        f"cf_connecting_ip={request.headers.get('cf-connecting-ip')} allowed={allowed}"
-    )
-    if not allowed:
-        raise HTTPException(status_code=403, detail="Source IP is not a recognized Paddle IP")
-
     raw_body = await request.body()
     signature_header = request.headers.get("paddle-signature", "")
 

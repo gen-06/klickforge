@@ -60,7 +60,7 @@ class _RateLimitStore:
 _store = _RateLimitStore()
 
 
-def get_client_ip(request: Request) -> str:
+def _get_client_ip(request: Request) -> str:
     forwarded = request.headers.get("x-forwarded-for")
     if forwarded:
         return forwarded.split(",")[0].strip()
@@ -95,7 +95,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         elif is_authenticated:
             key = f"auth:{hash(auth_header)}"
         else:
-            key = f"ip:{get_client_ip(request)}"
+            key = f"ip:{_get_client_ip(request)}"
 
         if not _store.is_allowed(key, window, max_requests):
             logger.warning("rate_limit.exceeded", extra={"key": key, "path": request.url.path})
