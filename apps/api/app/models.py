@@ -118,6 +118,10 @@ class Video(Base):
     transcript = Column(JSON, nullable=True)
     audio_mode = Column(String(32), default="subtitles_only", nullable=False)
     voice = Column(String(32), default="alloy", nullable=False)
+    # Opt-in flag: only videos explicitly marked true are eligible to have
+    # their clips shown on the public "See it in action" homepage section.
+    # Defaults false so a customer's upload is never public without consent.
+    is_demo = Column(Boolean, default=False, nullable=False, server_default="false")
     created_at = Column(DateTime, default=datetime.utcnow)
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 

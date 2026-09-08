@@ -93,3 +93,10 @@ async def get_current_user(
         db.commit()
         db.refresh(user)
     return user
+
+
+def require_admin(user: User = Depends(get_current_user)) -> User:
+    admin_emails = set(settings.admin_email_list)
+    if not admin_emails or user.email.lower() not in admin_emails:
+        raise HTTPException(status_code=403, detail="Forbidden")
+    return user

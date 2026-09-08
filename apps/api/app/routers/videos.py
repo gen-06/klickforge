@@ -5,8 +5,9 @@ from uuid import UUID, uuid4
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
+from app.auth import get_current_user, require_admin
 from app.config import settings
+from pydantic import BaseModel
 from app.database import get_db
 from app.models import Clip, Job, JobStatus, User, Video, VideoStatus
 from app.schemas import (
@@ -259,3 +260,26 @@ def update_transcript(
         segments=video.transcript or [],
         language=video.target_language or video.source_language,
     )
+
+
+class VideoDemoUpdate(BaseModel):
+    is_demo: bool
+
+
+@router.patch("/{video_id}/demo")
+def set_video_demo_flag(
+    video_id: UUID,
+    payload: VideoDemoUpdate,
+    db: Session = Depends(get_db),
+    _admin: User = Depends(require_admin),
+):
+    """Admin-only: opt a video's clips into (or out of) the public homepage
+    demo section. Not scoped to the admin's own videos — this curates what
+    any account's content is allowed to show publicly."""
+    video = db.query(Video).filter(Video.id == video_id).first()
+    if not video:
+        raise HTTPException(status_code=404, detail="Video not found")
+
+    video.is_demo = payload.is_demo
+    db.commit()
+    return {"id": str(video.id), "is_demo": video.is_demo}

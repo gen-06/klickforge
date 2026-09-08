@@ -2,15 +2,14 @@
 
 import re
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel, field_validator
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.auth import get_current_user
-from app.config import settings
+from app.auth import require_admin
 from app.database import get_db
-from app.models import User, Waitlist
+from app.models import Waitlist
 
 router = APIRouter()
 
@@ -48,18 +47,11 @@ def signup(payload: WaitlistSignup, db: Session = Depends(get_db)):
     return {"status": "registered", "email": payload.email}
 
 
-def _require_admin(user: User):
-    admin_emails = set(settings.admin_email_list)
-    if not admin_emails or user.email.lower() not in admin_emails:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-
 @router.get("")
 def export_waitlist(
     db: Session = Depends(get_db),
-    user: User = Depends(get_current_user),
+    _admin=Depends(require_admin),
 ):
-    _require_admin(user)
     entries = db.query(Waitlist).order_by(Waitlist.created_at.desc()).all()
     return {
         "count": len(entries),

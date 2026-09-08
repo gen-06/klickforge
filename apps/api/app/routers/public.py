@@ -29,7 +29,11 @@ def demo_clips(limit: int = 3, db: Session = Depends(get_db)):
     clips = (
         db.query(Clip)
         .join(Video)
-        .filter(Clip.status == ClipStatus.DONE, Clip.output_url.isnot(None))
+        .filter(
+            Clip.status == ClipStatus.DONE,
+            Clip.output_url.isnot(None),
+            Video.is_demo.is_(True),
+        )
         .order_by(Clip.score.desc().nullslast(), Clip.created_at.desc())
         .limit(limit)
         .all()

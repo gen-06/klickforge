@@ -29,6 +29,7 @@ def test_public_clip_returns_finished_clip(client, db_session, test_video):
 
 
 def test_demo_clips_returns_finished_clips(client, db_session, test_video):
+    test_video.is_demo = True
     clip = Clip(
         video_id=test_video.id,
         start_time=0,
@@ -45,6 +46,26 @@ def test_demo_clips_returns_finished_clips(client, db_session, test_video):
     data = response.json()
     assert len(data["clips"]) == 1
     assert data["clips"][0]["id"] == str(clip.id)
+
+
+def test_demo_clips_excludes_non_demo_videos(client, db_session, test_video):
+    """A finished clip on a video nobody opted into the demo section must
+    never appear publicly — this is a privacy guarantee, not just a filter."""
+    assert test_video.is_demo is False
+    clip = Clip(
+        video_id=test_video.id,
+        start_time=0,
+        end_time=10,
+        score=0.99,
+        output_url="https://example.com/clip.mp4",
+        status=ClipStatus.DONE,
+    )
+    db_session.add(clip)
+    db_session.commit()
+
+    response = client.get("/api/v1/public/demo-clips")
+    assert response.status_code == 200
+    assert response.json()["clips"] == []
 
 
 def test_waitlist_signup(client):
