@@ -291,7 +291,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t border-zinc-200 px-4 py-8 text-center text-sm text-zinc-500 dark:border-zinc-800 sm:px-6">
-        <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:gap-4">
+        <div className="flex flex-col items-center justify-center gap-2 sm:flex-row sm:flex-wrap sm:gap-4">
           <span>© {new Date().getFullYear()} ClipForge</span>
           <Link
             href="/docs/api"
@@ -305,6 +305,30 @@ export default function Home() {
           >
             Pricing
           </Link>
+          <Link
+            href="/terms"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Terms
+          </Link>
+          <Link
+            href="/privacy"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Privacy
+          </Link>
+          <Link
+            href="/refund-policy"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Refunds
+          </Link>
+          <a
+            href="mailto:support@clickforg.com"
+            className="text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+          >
+            Contact
+          </a>
         </div>
       </footer>
     </div>

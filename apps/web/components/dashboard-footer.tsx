@@ -17,8 +17,17 @@ export function DashboardFooter() {
           <Link href="/docs/api" className="hover:text-zinc-900 dark:hover:text-zinc-200">
             API docs
           </Link>
+          <Link href="/terms" className="hover:text-zinc-900 dark:hover:text-zinc-200">
+            Terms
+          </Link>
+          <Link href="/privacy" className="hover:text-zinc-900 dark:hover:text-zinc-200">
+            Privacy
+          </Link>
+          <Link href="/refund-policy" className="hover:text-zinc-900 dark:hover:text-zinc-200">
+            Refunds
+          </Link>
           <a
-            href="mailto:support@clipforge.app"
+            href="mailto:support@clickforg.com"
             className="hover:text-zinc-900 dark:hover:text-zinc-200"
           >
             Support
