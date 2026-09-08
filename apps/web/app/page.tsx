@@ -174,18 +174,9 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Demo clips */}
-        <section className="border-y border-zinc-200 bg-zinc-50 px-4 py-16 dark:border-zinc-800 dark:bg-zinc-950 sm:px-6">
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-center text-2xl font-semibold sm:text-3xl">See it in action</h2>
-            <p className="mx-auto mt-4 max-w-xl text-center text-zinc-600 dark:text-zinc-400">
-              Real vertical clips created by ClipForge from long-form videos.
-            </p>
-            <div className="mt-10">
-              <DemoClips />
-            </div>
-          </div>
-        </section>
+        {/* Demo clips: renders nothing (including no heading) until at
+            least one clip has been explicitly opted into the public demo. */}
+        <DemoClips />
 
         {/* How it works */}
         <section className="px-4 py-16 sm:px-6">

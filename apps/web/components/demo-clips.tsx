@@ -44,11 +44,16 @@ export function DemoClips() {
     };
   }, []);
 
+  // Own the whole section, heading included — not just the clip grid — so
+  // there's never a "See it in action" heading floating above empty space
+  // while nothing has been opted into the public demo yet.
   if (loading) {
     return (
-      <div className="flex items-center justify-center gap-2 py-12 text-zinc-500">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading demo clips...
-      </div>
+      <section className="border-y border-zinc-200 bg-zinc-50 px-4 py-16 dark:border-zinc-800 dark:bg-zinc-950 sm:px-6">
+        <div className="flex items-center justify-center gap-2 py-12 text-zinc-500">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading demo clips...
+        </div>
+      </section>
     );
   }
 
@@ -57,27 +62,35 @@ export function DemoClips() {
   }
 
   return (
-    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-      {clips.map((clip) => (
-        <div
-          key={clip.id}
-          className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
-        >
-          <video
-            src={clip.output_url}
-            controls
-            crossOrigin="anonymous"
-            className="aspect-[9/16] w-full bg-black object-contain"
-          />
-          <div className="border-t border-zinc-100 p-4 dark:border-zinc-800">
-            <p className="truncate text-sm font-medium">{clip.title || "Demo clip"}</p>
-            <p className="mt-1 text-xs text-zinc-500">
-              {formatDuration(clip.duration)} • {formatDuration(clip.start_time)} –{" "}
-              {formatDuration(clip.end_time)}
-            </p>
-          </div>
+    <section className="border-y border-zinc-200 bg-zinc-50 px-4 py-16 dark:border-zinc-800 dark:bg-zinc-950 sm:px-6">
+      <div className="mx-auto max-w-5xl">
+        <h2 className="text-center text-2xl font-semibold sm:text-3xl">See it in action</h2>
+        <p className="mx-auto mt-4 max-w-xl text-center text-zinc-600 dark:text-zinc-400">
+          Real vertical clips created by ClipForge from long-form videos.
+        </p>
+        <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {clips.map((clip) => (
+            <div
+              key={clip.id}
+              className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"
+            >
+              <video
+                src={clip.output_url}
+                controls
+                crossOrigin="anonymous"
+                className="aspect-[9/16] w-full bg-black object-contain"
+              />
+              <div className="border-t border-zinc-100 p-4 dark:border-zinc-800">
+                <p className="truncate text-sm font-medium">{clip.title || "Demo clip"}</p>
+                <p className="mt-1 text-xs text-zinc-500">
+                  {formatDuration(clip.duration)} • {formatDuration(clip.start_time)} –{" "}
+                  {formatDuration(clip.end_time)}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </section>
   );
 }
