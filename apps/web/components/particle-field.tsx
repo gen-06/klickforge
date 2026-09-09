@@ -41,7 +41,7 @@ export function ParticleField() {
     let visible = true;
 
     function seed() {
-      const count = Math.max(30, Math.min(140, Math.floor((width * height) / 9000)));
+      const count = Math.max(50, Math.min(220, Math.floor((width * height) / 5500)));
       particles = Array.from({ length: count }, () => ({
         x: Math.random() * width,
         y: Math.random() * height,
