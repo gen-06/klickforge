@@ -3,6 +3,7 @@ import Link from "next/link";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { DemoClips } from "@/components/demo-clips";
 import { FloatingOrbs } from "@/components/floating-orbs";
+import { ParticleField } from "@/components/particle-field";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Scissors,
@@ -132,6 +133,7 @@ export default function Home() {
         {/* Hero */}
         <section className="relative overflow-hidden px-4 py-16 text-center sm:px-6 sm:py-28">
           <FloatingOrbs />
+          <ParticleField />
           <div className="mx-auto max-w-3xl">
             <div className="animate-float-c inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
               <Sparkles className="h-3.5 w-3.5" />
