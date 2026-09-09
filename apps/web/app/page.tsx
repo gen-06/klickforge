@@ -1,4 +1,4 @@
-import { Show, SignInButton, UserButton } from "@clerk/nextjs";
+import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { DemoClips } from "@/components/demo-clips";
@@ -142,11 +142,11 @@ export default function Home() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Show when="signed-out">
-                <SignInButton mode="modal">
+                <SignUpButton mode="modal">
                   <button className="rounded-full bg-zinc-900 px-6 py-3 text-base font-medium text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-zinc-200">
                     Get started free
                   </button>
-                </SignInButton>
+                </SignUpButton>
               </Show>
               <Show when="signed-in">
                 <Link
