@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   description: "How refunds, cancellations, and the free trial work on ClipForge.",
 };
 
-const LAST_UPDATED = "September 8, 2026";
+const LAST_UPDATED = "September 9, 2026";
 
 export default function RefundPolicyPage() {
   return (
@@ -51,30 +51,19 @@ export default function RefundPolicyPage() {
 
       <LegalH2>Refunds</LegalH2>
       <p>
-        Because processing a video consumes real, immediate compute and
-        third-party AI costs the moment you run it, we don&rsquo;t offer refunds
-        for credits already used to process video. Outside of that:
+        We offer a straightforward 14-day money-back guarantee: request a
+        refund within 14 days of any charge, for any reason, by emailing{" "}
+        <a href="mailto:support@clickforg.com" className="underline">
+          support@clickforg.com
+        </a>
+        , and we&rsquo;ll issue it &mdash; no questions asked. This applies to your
+        first payment and to any renewal charge.
       </p>
-      <ul className="list-disc space-y-1 pl-6">
-        <li>
-          If you&rsquo;re charged in error, or a technical issue with the Service
-          prevented you from using credits you paid for, email{" "}
-          <a href="mailto:support@clickforg.com" className="underline">
-            support@clickforg.com
-          </a>{" "}
-          within 14 days of the charge and we&rsquo;ll make it right.
-        </li>
-        <li>
-          If you cancel shortly after a renewal and haven&rsquo;t used any of that
-          period&rsquo;s credits, contact us and we&rsquo;ll consider a full or partial
-          refund on a case-by-case basis.
-        </li>
-        <li>
-          Approved refunds are issued to your original payment method by
-          Paddle and may take several business days to appear, depending on
-          your bank or card issuer.
-        </li>
-      </ul>
+      <p>
+        Approved refunds are issued to your original payment method by
+        Paddle and may take several business days to appear, depending on
+        your bank or card issuer.
+      </p>
 
       <LegalH2>Contact</LegalH2>
       <p>
