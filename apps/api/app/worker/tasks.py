@@ -213,6 +213,12 @@ def process_video(self, video_id: str, job_id: str):
             db.commit()
         if video:
             video.status = VideoStatus.FAILED
+            # The clip being encoded when the final retry failed is otherwise
+            # left stuck at PROCESSING forever, since it's a local loop
+            # variable the except block never touches.
+            db.query(Clip).filter(
+                Clip.video_id == video.id, Clip.status == ClipStatus.PROCESSING
+            ).update({"status": ClipStatus.FAILED})
             db.commit()
     finally:
         db.close()
@@ -437,6 +443,12 @@ def _crop_clip(
     cmd += [
         "-c:v",
         "libx264",
+        # The container reports the host's full core count (not the actual
+        # cgroup CPU quota), so libx264 auto-detects far more threads than
+        # are usable and over-allocates lookahead buffers accordingly. Cap
+        # it to the actual quota to avoid resource-pressure crashes mid-encode.
+        "-threads",
+        "2",
         "-pix_fmt",
         "yuv420p",
         "-movflags",
