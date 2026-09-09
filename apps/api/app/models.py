@@ -49,6 +49,7 @@ class User(Base):
 
     videos = relationship("Video", back_populates="user")
     customer = relationship("Customer", uselist=False, back_populates="user")
+    caption_presets = relationship("CaptionPreset", back_populates="user", cascade="all, delete-orphan")
 
 
 class Customer(Base):
@@ -95,6 +96,33 @@ class CreditPurchase(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     customer = relationship("Customer", back_populates="credit_purchases")
+
+
+class CaptionPreset(Base):
+    __tablename__ = "caption_presets"
+
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False, index=True)
+    name = Column(String(100), nullable=False)
+    # Same shape as the per-video caption fields below, plus the other
+    # settings a user reconfigures on every upload (language pair, audio
+    # mode, voice) — saving just caption styling wouldn't cover the full
+    # friction point.
+    source_language = Column(String(10), default="en")
+    target_language = Column(String(10), nullable=True)
+    subtitle_font = Column(String(255), default="Arial", nullable=False)
+    subtitle_size = Column(Integer, default=56, nullable=False)
+    subtitle_color = Column(String(32), default="#FFFFFF", nullable=False)
+    subtitle_position = Column(String(32), default="bottom", nullable=False)
+    subtitle_outline = Column(Integer, default=2, nullable=False)
+    subtitle_outline_color = Column(String(32), default="#000000", nullable=False)
+    audio_mode = Column(String(32), default="subtitles_only", nullable=False)
+    voice = Column(String(32), default="alloy", nullable=False)
+    is_default = Column(Boolean, default=False, nullable=False, server_default="false")
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    user = relationship("User", back_populates="caption_presets")
 
 
 class Video(Base):

@@ -10,7 +10,7 @@ from app.middleware.logging import RequestLoggingMiddleware
 from app.middleware.rate_limit import RateLimitMiddleware
 from app.middleware.security_headers import SecurityHeadersMiddleware
 from app.models import Base
-from app.routers import billing, clips, jobs, public, users, videos, waitlist
+from app.routers import billing, clips, jobs, presets, public, users, videos, waitlist
 from app.services.health import run_health_checks
 from app.services.storage import StorageService
 from app.worker import tasks  # noqa: F401
@@ -54,6 +54,7 @@ app.include_router(billing.router, prefix="/api/v1/billing", tags=["billing"])
 app.include_router(users.router, prefix="/api/v1/users", tags=["users"])
 app.include_router(waitlist.router, prefix="/api/v1/waitlist", tags=["waitlist"])
 app.include_router(public.router, prefix="/api/v1/public", tags=["public"])
+app.include_router(presets.router, prefix="/api/v1/presets", tags=["presets"])
 
 
 @app.get("/health")

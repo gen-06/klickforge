@@ -1,4 +1,4 @@
-import type { CaptionStyle, TranscriptSegment } from "@youtubers/shared";
+import type { CaptionPreset, CaptionStyle, TranscriptSegment } from "@youtubers/shared";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const MAX_RETRIES = 3;
@@ -320,5 +320,48 @@ export async function openCustomerPortal(token?: string | null) {
 
 export async function getCreditPacks(token?: string | null) {
   return apiFetch("/api/v1/billing/credits/packs", {}, token) as Promise<CreditPack[]>;
+}
+
+export interface CaptionPresetInput {
+  name: string;
+  source_language?: string;
+  target_language?: string | null;
+  subtitle_font?: string;
+  subtitle_size?: number;
+  subtitle_color?: string;
+  subtitle_position?: string;
+  subtitle_outline?: number;
+  subtitle_outline_color?: string;
+  audio_mode?: "subtitles_only" | "voiceover" | "voiceover_with_original";
+  voice?: string;
+  is_default?: boolean;
+}
+
+export async function listPresets(token?: string | null) {
+  return apiFetch("/api/v1/presets", {}, token) as Promise<CaptionPreset[]>;
+}
+
+export async function createPreset(payload: CaptionPresetInput, token?: string | null) {
+  return apiFetch(
+    "/api/v1/presets",
+    { method: "POST", body: JSON.stringify(payload) },
+    token
+  ) as Promise<CaptionPreset>;
+}
+
+export async function updatePreset(
+  presetId: string,
+  payload: Partial<CaptionPresetInput>,
+  token?: string | null
+) {
+  return apiFetch(
+    `/api/v1/presets/${presetId}`,
+    { method: "PATCH", body: JSON.stringify(payload) },
+    token
+  ) as Promise<CaptionPreset>;
+}
+
+export async function deletePreset(presetId: string, token?: string | null) {
+  return apiFetch(`/api/v1/presets/${presetId}`, { method: "DELETE" }, token);
 }
 

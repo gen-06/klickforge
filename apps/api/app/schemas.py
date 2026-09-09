@@ -130,3 +130,54 @@ class CreditPackOut(BaseModel):
     price_id: str
     credits: int
     label: str
+
+
+class CaptionPresetIn(BaseModel):
+    name: str
+    source_language: Optional[str] = "en"
+    target_language: Optional[str] = None
+    subtitle_font: Optional[str] = "Arial"
+    subtitle_size: Optional[int] = 56
+    subtitle_color: Optional[str] = "#FFFFFF"
+    subtitle_position: Optional[str] = "bottom"
+    subtitle_outline: Optional[int] = 2
+    subtitle_outline_color: Optional[str] = "#000000"
+    audio_mode: Literal["subtitles_only", "voiceover", "voiceover_with_original"] = "subtitles_only"
+    voice: Optional[str] = "alloy"
+    is_default: bool = False
+
+
+class CaptionPresetUpdate(BaseModel):
+    name: Optional[str] = None
+    source_language: Optional[str] = None
+    target_language: Optional[str] = None
+    subtitle_font: Optional[str] = None
+    subtitle_size: Optional[int] = None
+    subtitle_color: Optional[str] = None
+    subtitle_position: Optional[str] = None
+    subtitle_outline: Optional[int] = None
+    subtitle_outline_color: Optional[str] = None
+    audio_mode: Optional[Literal["subtitles_only", "voiceover", "voiceover_with_original"]] = None
+    voice: Optional[str] = None
+    is_default: Optional[bool] = None
+
+
+class CaptionPresetOut(BaseModel):
+    id: UUID
+    name: str
+    source_language: Optional[str]
+    target_language: Optional[str]
+    subtitle_font: str
+    subtitle_size: int
+    subtitle_color: str
+    subtitle_position: str
+    subtitle_outline: int
+    subtitle_outline_color: str
+    audio_mode: str
+    voice: str
+    is_default: bool
+    created_at: datetime
+    updated_at: datetime
+
+    class Config:
+        from_attributes = True

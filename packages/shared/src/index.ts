@@ -7,6 +7,24 @@ export interface CaptionStyle {
   outline_color: string;
 }
 
+export interface CaptionPreset {
+  id: string;
+  name: string;
+  source_language: string | null;
+  target_language: string | null;
+  subtitle_font: string;
+  subtitle_size: number;
+  subtitle_color: string;
+  subtitle_position: string;
+  subtitle_outline: number;
+  subtitle_outline_color: string;
+  audio_mode: "subtitles_only" | "voiceover" | "voiceover_with_original";
+  voice: string;
+  is_default: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface TranscriptSegment {
   start: number;
   end: number;

@@ -2,9 +2,17 @@
 
 import { useEffect, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { ChevronDown, Loader2, Upload } from "lucide-react";
-import type { CaptionStyle } from "@youtubers/shared";
-import { completeUpload, createVideo, getCurrentUser, getPresignedUploadUrl } from "@/lib/api";
+import { ChevronDown, Loader2, Save, Trash2, Upload } from "lucide-react";
+import type { CaptionPreset, CaptionStyle } from "@youtubers/shared";
+import {
+  completeUpload,
+  createPreset,
+  createVideo,
+  deletePreset,
+  getCurrentUser,
+  getPresignedUploadUrl,
+  listPresets,
+} from "@/lib/api";
 
 function uploadFileWithProgress(
   file: File,
@@ -87,6 +95,14 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
   const [dragActive, setDragActive] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
 
+  const [presets, setPresets] = useState<CaptionPreset[]>([]);
+  const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [showSavePreset, setShowSavePreset] = useState(false);
+  const [newPresetName, setNewPresetName] = useState("");
+  const [presetSaveAsDefault, setPresetSaveAsDefault] = useState(false);
+  const [presetBusy, setPresetBusy] = useState(false);
+  const [presetError, setPresetError] = useState<string | null>(null);
+
   const MAX_SIZE_MB = 2048;
   const ACCEPTED_TYPES = ["video/mp4", "video/quicktime", "video/webm", "video/x-matroska"];
   const ACCEPTED_EXTENSIONS = [".mp4", ".mov", ".webm", ".mkv"];
@@ -107,6 +123,106 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
       cancelled = true;
     };
   }, [getToken]);
+
+  function applyPreset(preset: CaptionPreset) {
+    setSourceLanguage(preset.source_language || "en");
+    setTargetLanguage(preset.target_language || "");
+    setCaptionStyle({
+      font: preset.subtitle_font,
+      size: preset.subtitle_size,
+      color: preset.subtitle_color,
+      position: preset.subtitle_position as CaptionStyle["position"],
+      outline: preset.subtitle_outline,
+      outline_color: preset.subtitle_outline_color,
+    });
+    setAudioMode(preset.audio_mode);
+    setVoice(preset.voice);
+  }
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadPresets() {
+      try {
+        const token = await getToken();
+        const data = await listPresets(token);
+        if (cancelled) return;
+        setPresets(data);
+        const defaultPreset = data.find((p) => p.is_default);
+        if (defaultPreset) {
+          setSelectedPresetId(defaultPreset.id);
+          applyPreset(defaultPreset);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadPresets();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [getToken]);
+
+  function handleSelectPreset(presetId: string) {
+    setSelectedPresetId(presetId);
+    const preset = presets.find((p) => p.id === presetId);
+    if (preset) applyPreset(preset);
+  }
+
+  async function handleSavePreset() {
+    if (!newPresetName.trim()) return;
+    setPresetBusy(true);
+    setPresetError(null);
+    try {
+      const token = await getToken();
+      const created = await createPreset(
+        {
+          name: newPresetName.trim(),
+          source_language: sourceLanguage,
+          target_language: targetLanguage || null,
+          subtitle_font: captionStyle.font,
+          subtitle_size: captionStyle.size,
+          subtitle_color: captionStyle.color,
+          subtitle_position: captionStyle.position,
+          subtitle_outline: captionStyle.outline,
+          subtitle_outline_color: captionStyle.outline_color,
+          audio_mode: audioMode,
+          voice,
+          is_default: presetSaveAsDefault,
+        },
+        token
+      );
+      setPresets((prev) => {
+        const next = presetSaveAsDefault ? prev.map((p) => ({ ...p, is_default: false })) : prev;
+        return [created, ...next];
+      });
+      setSelectedPresetId(created.id);
+      setNewPresetName("");
+      setPresetSaveAsDefault(false);
+      setShowSavePreset(false);
+    } catch (err) {
+      setPresetError(err instanceof Error ? err.message : "Failed to save preset");
+    } finally {
+      setPresetBusy(false);
+    }
+  }
+
+  async function handleDeletePreset() {
+    if (!selectedPresetId) return;
+    if (!confirm("Delete this preset?")) return;
+    setPresetBusy(true);
+    setPresetError(null);
+    try {
+      const token = await getToken();
+      await deletePreset(selectedPresetId, token);
+      setPresets((prev) => prev.filter((p) => p.id !== selectedPresetId));
+      setSelectedPresetId("");
+    } catch (err) {
+      setPresetError(err instanceof Error ? err.message : "Failed to delete preset");
+    } finally {
+      setPresetBusy(false);
+    }
+  }
 
   const [duration, setDuration] = useState<number | null>(null);
 
@@ -263,6 +379,38 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
             className="mt-1 w-full rounded-lg border border-zinc-300 px-3 py-2 focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
           />
         </div>
+
+        {presets.length > 0 && (
+          <div>
+            <label className="block text-sm font-medium">Preset</label>
+            <div className="mt-1 flex items-center gap-2">
+              <select
+                value={selectedPresetId}
+                onChange={(e) => handleSelectPreset(e.target.value)}
+                className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+              >
+                <option value="">— No preset —</option>
+                {presets.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                    {p.is_default ? " (default)" : ""}
+                  </option>
+                ))}
+              </select>
+              {selectedPresetId && (
+                <button
+                  type="button"
+                  onClick={handleDeletePreset}
+                  disabled={presetBusy}
+                  aria-label="Delete preset"
+                  className="shrink-0 rounded-lg border border-zinc-300 p-2 text-zinc-500 hover:border-red-300 hover:text-red-600 disabled:opacity-50 dark:border-zinc-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
@@ -482,6 +630,64 @@ export function UploadForm({ onUploaded }: UploadFormProps) {
                     <option value="top">Top</option>
                   </select>
                 </div>
+              </div>
+
+              <div className="border-t border-zinc-200 pt-3 dark:border-zinc-800">
+                {showSavePreset ? (
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      value={newPresetName}
+                      onChange={(e) => setNewPresetName(e.target.value)}
+                      placeholder="Preset name"
+                      className="w-full rounded-lg border border-zinc-300 px-3 py-2 text-sm focus:border-zinc-900 focus:outline-none dark:border-zinc-700 dark:bg-zinc-900"
+                    />
+                    <label className="flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-400">
+                      <input
+                        type="checkbox"
+                        checked={presetSaveAsDefault}
+                        onChange={(e) => setPresetSaveAsDefault(e.target.checked)}
+                      />
+                      Use as default for future uploads
+                    </label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleSavePreset}
+                        disabled={presetBusy || !newPresetName.trim()}
+                        className="inline-flex items-center gap-1.5 rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-zinc-800 disabled:opacity-50 dark:bg-white dark:text-black"
+                      >
+                        {presetBusy ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        ) : (
+                          <Save className="h-3.5 w-3.5" />
+                        )}
+                        Save preset
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowSavePreset(false);
+                          setNewPresetName("");
+                          setPresetError(null);
+                        }}
+                        className="rounded-lg px-3 py-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                    {presetError && <p className="text-xs text-red-600">{presetError}</p>}
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowSavePreset(true)}
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  >
+                    <Save className="h-3.5 w-3.5" />
+                    Save current settings as preset
+                  </button>
+                )}
               </div>
             </div>
           )}

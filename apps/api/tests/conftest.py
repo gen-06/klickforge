@@ -43,7 +43,19 @@ uuid.uuid4 = lambda: str(_uuid4())
 
 from app.database import Base, get_db  # noqa: E402
 from app.main import app  # noqa: E402
+from app.middleware.rate_limit import _store as _rate_limit_store  # noqa: E402
 from app.models import User, Video, VideoStatus  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _reset_rate_limiter():
+    """The rate limiter's bucket store is a module-level singleton, so
+    request counts would otherwise accumulate across every test in the same
+    pytest run (all tests share the same mocked auth token, hence the same
+    bucket key) and eventually trip the limit on unrelated tests."""
+    _rate_limit_store.buckets.clear()
+    yield
+    _rate_limit_store.buckets.clear()
 
 
 @pytest.fixture(scope="function")
