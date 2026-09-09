@@ -9,6 +9,7 @@ import {
   type PricePreviewResponse,
 } from "@paddle/paddle-js";
 import { Check, Loader2, AlertCircle } from "lucide-react";
+import { FloatingOrbs } from "@/components/floating-orbs";
 
 export interface Tier {
   name: "Starter" | "Pro" | "Advanced";
@@ -180,14 +181,7 @@ export function PricingCards({
 
   return (
     <div className="relative overflow-hidden">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-      >
-        <div className="animate-float-b absolute -left-16 top-8 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl dark:bg-blue-500/10" />
-        <div className="animate-float-a absolute right-0 top-24 h-72 w-72 rounded-full bg-purple-400/20 blur-3xl dark:bg-purple-500/10" />
-        <div className="animate-float-c absolute left-1/3 bottom-0 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl dark:bg-emerald-500/10" />
-      </div>
+      <FloatingOrbs />
       <div className="mx-auto w-full max-w-6xl px-6 py-12">
         <div className="text-center">
           <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">

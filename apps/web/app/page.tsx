@@ -2,6 +2,7 @@ import { Show, SignInButton, SignUpButton, UserButton } from "@clerk/nextjs";
 import Link from "next/link";
 import { WaitlistForm } from "@/components/waitlist-form";
 import { DemoClips } from "@/components/demo-clips";
+import { FloatingOrbs } from "@/components/floating-orbs";
 import { ThemeToggle } from "@/components/theme-toggle";
 import {
   Scissors,
@@ -130,14 +131,7 @@ export default function Home() {
       <main className="flex-1">
         {/* Hero */}
         <section className="relative overflow-hidden px-4 py-16 text-center sm:px-6 sm:py-28">
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
-          >
-            <div className="animate-float-b absolute -left-16 top-8 h-64 w-64 rounded-full bg-blue-400/20 blur-3xl dark:bg-blue-500/10" />
-            <div className="animate-float-a absolute right-0 top-24 h-72 w-72 rounded-full bg-purple-400/20 blur-3xl dark:bg-purple-500/10" />
-            <div className="animate-float-c absolute left-1/3 bottom-0 h-56 w-56 rounded-full bg-emerald-400/15 blur-3xl dark:bg-emerald-500/10" />
-          </div>
+          <FloatingOrbs />
           <div className="mx-auto max-w-3xl">
             <div className="animate-float-c inline-flex items-center gap-2 rounded-full border border-zinc-200 bg-white px-3 py-1 text-xs font-medium text-zinc-600 dark:border-zinc-800 dark:bg-zinc-950 dark:text-zinc-400">
               <Sparkles className="h-3.5 w-3.5" />
