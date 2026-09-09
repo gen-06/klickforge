@@ -34,11 +34,11 @@ const features = [
     icon: Globe,
     title: "Translate & dub",
     description:
-      "Reach global audiences by translating captions and generating AI voiceovers.",
+      "Reach global audiences by translating captions and adding a dubbed voice track in your target language.",
   },
   {
     icon: Wand2,
-    title: "AI clip scoring",
+    title: "Smart clip selection",
     description:
       "We analyze your video and surface the most engaging moments to clip.",
   },
@@ -69,7 +69,7 @@ const pricingTeaser = [
     price: "$10",
     period: "/month",
     description: "Perfect for solo creators trying short-form.",
-    features: ["Up to 100 min of video/month", "AI captions & styling", "Email support"],
+    features: ["Up to 100 min of video/month", "Auto-captions & styling", "Email support"],
   },
   {
     name: "Pro",

@@ -63,8 +63,8 @@ const LANGUAGES = [
 
 const AUDIO_MODES: { value: "subtitles_only" | "voiceover" | "voiceover_with_original"; label: string }[] = [
   { value: "subtitles_only", label: "Subtitles only (original audio)" },
-  { value: "voiceover", label: "AI voiceover (translated audio)" },
-  { value: "voiceover_with_original", label: "AI voiceover + original background" },
+  { value: "voiceover", label: "Dubbed voiceover (translated audio)" },
+  { value: "voiceover_with_original", label: "Dubbed voiceover + original background" },
 ];
 
 const VOICES = ["alloy", "echo", "fable", "onyx", "nova", "shimmer"];

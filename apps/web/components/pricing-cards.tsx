@@ -31,8 +31,8 @@ const TIERS: Tier[] = [
     description: "For creators getting started with short-form content.",
     features: [
       "Up to 100 min of video/month",
-      "AI captions with full style customization",
-      "Multi-language translation & AI voiceover",
+      "Auto-captions with full style customization",
+      "Multi-language translation & dubbing",
       "1080×1920 vertical exports",
       "Email support",
     ],
@@ -43,8 +43,8 @@ const TIERS: Tier[] = [
     description: "For growing channels that need more power and flexibility.",
     features: [
       "Up to 250 min of video/month",
-      "AI captions with full style customization",
-      "Multi-language translation & AI voiceover",
+      "Auto-captions with full style customization",
+      "Multi-language translation & dubbing",
       "1080×1920 vertical exports",
       "Priority email support",
     ],
@@ -55,8 +55,8 @@ const TIERS: Tier[] = [
     description: "For teams and agencies producing at scale.",
     features: [
       "Up to 600 min of video/month",
-      "AI captions with full style customization",
-      "Multi-language translation & AI voiceover",
+      "Auto-captions with full style customization",
+      "Multi-language translation & dubbing",
       "1080×1920 vertical exports",
       "Priority support",
     ],

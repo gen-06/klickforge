@@ -18,9 +18,9 @@ const STEPS = [
   },
   {
     icon: Scissors,
-    title: "AI creates your clips",
+    title: "We create your clips",
     description:
-      "Our AI finds the best moments, crops them to 9:16, adds captions, and dubs if you want.",
+      "We find the best moments, crop them to 9:16, add captions, and dub if you want.",
   },
   {
     icon: Download,

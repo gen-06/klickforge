@@ -17,14 +17,14 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "ClipForge — Turn Long Videos Into Short-Form Clips",
   description:
-    "ClipForge auto-detects, crops, captions, and dubs vertical clips ready for TikTok, Instagram Reels, and YouTube Shorts.",
+    "ClipForge auto-crops your long-form video into vertical clips with burned-in captions, ready for TikTok, Instagram Reels, and YouTube Shorts.",
   keywords: [
     "video clipping",
     "short form video",
     "TikTok clips",
     "Instagram Reels",
     "YouTube Shorts",
-    "AI video editor",
+    "video editor",
     "video repurposing",
     "automatic captions",
     "video translation",
@@ -33,7 +33,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "ClipForge — Turn Long Videos Into Short-Form Clips",
     description:
-      "Upload your long-form videos and let AI create vertical clips with captions and voiceovers.",
+      "Upload your long-form videos and automatically crop, caption, and translate them into vertical clips ready to post.",
     type: "website",
     siteName: "ClipForge",
   },
@@ -41,7 +41,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "ClipForge — Turn Long Videos Into Short-Form Clips",
     description:
-      "Upload your long-form videos and let AI create vertical clips with captions and voiceovers.",
+      "Upload your long-form videos and automatically crop, caption, and translate them into vertical clips ready to post.",
   },
   robots: {
     index: true,

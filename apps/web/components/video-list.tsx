@@ -40,7 +40,7 @@ function formatCaptionStyle(video: Video) {
 function formatAudioMode(mode: Video["audio_mode"]) {
   const labels = {
     subtitles_only: "Subtitles only",
-    voiceover: "AI voiceover",
+    voiceover: "Dubbed voiceover",
     voiceover_with_original: "Voiceover + original",
   };
   return labels[mode] || mode;
