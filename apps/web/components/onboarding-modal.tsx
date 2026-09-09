@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { X, Upload, Sparkles, Scissors, Download } from "lucide-react";
 
 const STEPS = [
@@ -32,14 +32,19 @@ const STEPS = [
 
 const STORAGE_KEY = "clipforge-onboarding-dismissed";
 
-function _initiallyOpen() {
-  if (typeof window === "undefined") return false;
-  return !localStorage.getItem(STORAGE_KEY);
-}
-
 export function OnboardingModal() {
-  const [open, setOpen] = useState(_initiallyOpen);
+  // Always starts closed so the server-rendered and first client-hydrated
+  // markup match; the actual open/closed decision (which depends on
+  // localStorage, unavailable during SSR) is deferred to an effect that
+  // runs only after mount.
+  const [open, setOpen] = useState(false);
   const [step, setStep] = useState(0);
+
+  useEffect(() => {
+    if (!localStorage.getItem(STORAGE_KEY)) {
+      setOpen(true);
+    }
+  }, []);
 
   function dismiss() {
     setOpen(false);
