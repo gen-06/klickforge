@@ -1,60 +1,83 @@
 # ClipForge
 
-SaaS platform for converting long-form YouTube videos into vertical short-form clips for TikTok, Reels, and YouTube Shorts.
+ClipForge turns long-form video into vertical, short-form clips ready for TikTok, Instagram Reels, and YouTube Shorts. Upload a video and it automatically crops to 9:16, transcribes and burns in styled captions, optionally translates and dubs into another language, and surfaces the most engaging moments as ready-to-post clips.
 
-## Stack
+Live at **[clickforg.com](https://clickforg.com)**.
 
-- **Frontend:** Next.js 16 + React 19 + TypeScript + Tailwind CSS + Clerk auth
-- **Backend:** FastAPI + SQLAlchemy + PostgreSQL + Celery + Redis
-- **Video processing:** FFmpeg
-- **Object storage:** MinIO (local) / Cloudflare R2 (production)
-- **Deployment:** Docker Compose locally; Railway/Render for production
+## Features
+
+- **Auto-crop to vertical** — 16:9 source video cropped to 9:16 for short-form platforms
+- **Burned-in captions** — automatic transcription with customizable font, size, color, position, and outline
+- **Translate & dub** — multi-language caption translation plus an optional dubbed voice track
+- **Smart clip selection** — transcript segments are scored to surface the most engaging moments
+- **Caption presets** — save and reuse a named style/language/voice configuration across uploads
+- **Credit-based billing** — subscription tiers plus one-time top-up credit packs, billed through Paddle
+- **Clip analytics** — view and download counts per clip
+- **Admin tools** — waitlist export, opt-in homepage demo clips
+
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | Next.js 16, React 19, TypeScript, Tailwind CSS, Clerk |
+| Backend | FastAPI, SQLAlchemy, Alembic, Celery, Redis |
+| Database | PostgreSQL |
+| Video processing | FFmpeg, OpenAI Whisper (transcription), OpenAI TTS (voiceover) |
+| Object storage | Cloudflare R2 (S3-compatible); MinIO for local dev |
+| Billing | Paddle (Merchant of Record) |
+| Hosting | Vercel (web), Railway (API + worker + Postgres + Redis) |
 
 ## Project Structure
 
 ```
-youtubers/
+klickforge/
 ├── apps/
-│   ├── web/              # Next.js frontend
-│   └── api/              # FastAPI backend + Celery worker
+│   ├── web/                # Next.js frontend
+│   └── api/                # FastAPI backend + Celery worker
 ├── packages/
-│   └── shared/           # Shared TypeScript types
+│   └── shared/              # Shared TypeScript types
+├── docs/
+│   └── deployment.md        # Production deployment guide
 ├── infra/
-│   └── docker-compose.yml
+│   └── docker-compose.yml   # Local Postgres/Redis/MinIO only — not used in production
 └── README.md
 ```
 
-## Quick Start
+## Local Development
 
-### 1. Prerequisites
+### Prerequisites
 
 - Node.js 20+ and pnpm 9+
 - Docker and Docker Compose
-- Python 3.12 (for local backend development)
+- Python 3.12 (for running the API outside Docker)
 
-### 2. Install dependencies
+### 1. Install dependencies
 
 ```bash
 pnpm install
 pnpm --filter @youtubers/shared build
 ```
 
-### 3. Configure environment
+### 2. Configure environment
+
+Each app reads its own env file — see the comments in each `.env.example` for where to get each value:
 
 ```bash
-cp .env.example .env
-# Edit .env and add your Clerk keys (optional for local demo mode)
+cp apps/api/.env.example apps/api/.env
+cp apps/web/.env.example apps/web/.env.local
 ```
 
-### 4. Start the local stack
+Clerk, OpenAI, and Paddle keys are required for full functionality; the app fails loudly on startup if a required variable is missing rather than degrading silently.
+
+### 3. Start local infrastructure
 
 ```bash
 docker compose -f infra/docker-compose.yml up -d
 ```
 
-This starts PostgreSQL, Redis, MinIO, the API server, and the Celery worker.
+This starts PostgreSQL, Redis, MinIO (local S3-compatible storage), the API server, and the Celery worker.
 
-### 5. Run the frontend
+### 4. Run the frontend
 
 ```bash
 pnpm --filter web dev
@@ -62,46 +85,64 @@ pnpm --filter web dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
-In local demo mode, the backend automatically creates and uses a demo user so you can test uploads without Clerk keys.
+### 5. Run database migrations
 
-### 6. Access MinIO console
+```bash
+docker compose -f infra/docker-compose.yml exec api alembic upgrade head
+```
+
+### MinIO console (local object storage)
 
 - Console: [http://localhost:9001](http://localhost:9001)
 - Credentials: `minioadmin` / `minioadmin`
 
-## API Endpoints
+## Testing
 
-- `GET /health` — health check
-- `POST /api/v1/videos/presigned-upload` — get a presigned upload URL
-- `POST /api/v1/videos` — register a new video
-- `POST /api/v1/videos/{id}/complete` — mark upload complete and start processing
-- `GET /api/v1/videos` — list videos
-- `GET /api/v1/videos/{id}/clips` — list clips for a video
-- `GET /api/v1/jobs/{id}` — get job status
-- `GET /api/v1/clips/{id}/download` — get signed clip download URL
+```bash
+# Backend (pytest)
+cd apps/api
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+pytest
+
+# Frontend (vitest)
+pnpm test
+```
+
+`apps/api` is a plain Python project, not a pnpm workspace member, so backend tests always run separately from `pnpm test` (which only covers the frontend, via Turborepo).
 
 ## Development Commands
 
 ```bash
-# Run all dev servers
-pnpm dev
-
-# Build everything
-pnpm build
-
-# Lint
-pnpm lint
-
-# Backend migrations (inside API container)
-docker compose -f infra/docker-compose.yml exec api alembic upgrade head
+pnpm dev      # run the frontend dev server (Turborepo)
+pnpm build    # build the frontend and shared package
+pnpm lint     # lint the frontend
+pnpm test     # test the frontend
 ```
 
-## Production Notes
+These commands (via Turborepo) only cover the JS workspaces — `apps/web` and `packages/shared`. The Python API and Celery worker (`apps/api`) are started separately: via `docker compose` locally (see [Local Development](#local-development) above), or directly with `uvicorn`/`celery` when developing outside Docker.
 
-- Replace the demo auth in `apps/api/app/routers/videos.py` with Clerk JWT verification.
-- Switch MinIO config to Cloudflare R2 or AWS S3.
-- Run Celery workers on larger CPU instances for video transcoding.
-- Add Sentry, monitoring, and CI/CD pipelines.
+## API Overview
+
+The backend exposes a versioned REST API under `/api/v1`, grouped by resource:
+
+| Prefix | Covers |
+|---|---|
+| `/api/v1/videos` | Upload, processing, retry, transcript editing |
+| `/api/v1/clips` | Clip listing, download, view tracking, regeneration |
+| `/api/v1/jobs` | Async job status polling |
+| `/api/v1/presets` | Saved caption/style presets |
+| `/api/v1/billing` | Subscriptions, customer portal, credit packs, Paddle webhooks |
+| `/api/v1/users` | Current user profile and activity |
+| `/api/v1/waitlist` | Waitlist signup and admin export |
+| `/api/v1/public` | Public, unauthenticated endpoints (e.g. opt-in demo clips) |
+| `/health` | Health check (database + Redis) |
+
+Interactive docs are available at `/docs` (FastAPI/Swagger) on the API server.
+
+## Deployment
+
+Production deployment (Railway + Vercel + Cloudflare R2 + Paddle) is documented in [`docs/deployment.md`](docs/deployment.md).
 
 ## License
 
